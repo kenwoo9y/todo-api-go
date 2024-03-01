@@ -9,8 +9,8 @@ build: ## Build docker image to deploy
 build-local: ## Build docker image to local development
 	docker compose build --no-cache
 
-up: ## Do docker compose up with hot reload
-	docker compose up -d
+up: ## Do docker compose up
+	docker compose up
 
 down: ## Do docker compose down
 	docker compose down
