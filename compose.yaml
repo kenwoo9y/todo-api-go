@@ -8,3 +8,36 @@ services:
       - .:/app
     ports:
       - "18000:8080"
+
+  mysql-db:
+    image: mysql:8.0
+    platform: linux/x86_64
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql-todo-db-data:/var/lib/mysql
+      - $PWD/_tools/mysql/conf.d:/etc/mysql/conf.d:cached
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - 33306:3306
+  
+  postgresql-db:
+    image: postgres:16
+    platform: linux/x86_64
+    container_name: postgresql-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgresql-todo-db-data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+
+volumes:
+  mysql-todo-db-data:
+  postgresql-todo-db-data:
