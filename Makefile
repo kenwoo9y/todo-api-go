@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: help build-local up down logs ps migrate-mysql migrate-psql
+.PHONY: help build-local up down logs ps migrate-mysql migrate-psql mysql psql
 .DEFAULT_GOAL := help
 
 build-local: ## Build docker image to local development
@@ -32,6 +32,12 @@ migrate-psql: ## Run PostgreSQL migration
 		exit 1; \
 	fi
 	docker compose exec todo-api psqldef -h postgresql-db -p 5432 -U $$DB_USER -W $$DB_PASSWORD $$DB_NAME -f _tools/postgresql/schema.sql
+
+mysql: ## Access MySQL Database
+	docker compose exec mysql-db mysql -u todo -ptodo
+
+psql: ## Access PostgreSQL Database
+	docker compose exec postgresql-db psql -U todo -d todo -W
 
 help: ## Show options
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
