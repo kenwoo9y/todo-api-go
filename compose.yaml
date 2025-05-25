@@ -8,6 +8,8 @@ services:
       - .:/app
     ports:
       - "18000:8080"
+    environment:
+      PATH: "/root/go/bin:${PATH}"
 
   mysql-db:
     image: mysql:8.0

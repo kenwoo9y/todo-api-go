@@ -1,4 +1,7 @@
-.PHONY: help build-local up down logs ps
+include .env
+export
+
+.PHONY: help build-local up down logs ps migrate-mysql migrate-psql
 .DEFAULT_GOAL := help
 
 build-local: ## Build docker image to local development
@@ -15,6 +18,20 @@ logs: ## Tail docker compose logs
 
 ps: ## Check container status
 	docker compose ps
+
+migrate-mysql: ## Run MySQL migration
+	@if [ -z "$$DB_NAME" ]; then \
+		echo "Error: DB_NAME environment variable must be set"; \
+		exit 1; \
+	fi
+	docker compose exec -T todo-api mysqldef -h mysql-db -P 3306 --user=$$DB_USER --password=$$DB_PASSWORD $$DB_NAME < _tools/mysql/schema.sql
+
+migrate-psql: ## Run PostgreSQL migration
+	@if [ -z "$$DB_NAME" ]; then \
+		echo "Error: DB_NAME environment variable must be set"; \
+		exit 1; \
+	fi
+	docker compose exec todo-api psqldef -h postgresql-db -p 5432 -U $$DB_USER -W $$DB_PASSWORD $$DB_NAME -f _tools/postgresql/schema.sql
 
 help: ## Show options
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \

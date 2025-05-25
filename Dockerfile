@@ -23,5 +23,9 @@ CMD ["./app"]
 
 FROM golang:1.23 as dev
 WORKDIR /app
+ENV GOPATH=/root/go
+ENV PATH=$GOPATH/bin:$PATH
+RUN go install github.com/sqldef/sqldef/cmd/mysqldef@latest
+RUN go install github.com/sqldef/sqldef/cmd/psqldef@latest
 RUN go install github.com/air-verse/air@latest
 CMD ["air"]
