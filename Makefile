@@ -20,24 +20,16 @@ ps: ## Check container status
 	docker compose ps
 
 migrate-mysql: ## Run MySQL migration
-	@if [ -z "$$DB_NAME" ]; then \
-		echo "Error: DB_NAME environment variable must be set"; \
-		exit 1; \
-	fi
 	docker compose exec -T todo-api mysqldef -h mysql-db -P 3306 --user=$$DB_USER --password=$$DB_PASSWORD $$DB_NAME < _tools/mysql/schema.sql
 
 migrate-psql: ## Run PostgreSQL migration
-	@if [ -z "$$DB_NAME" ]; then \
-		echo "Error: DB_NAME environment variable must be set"; \
-		exit 1; \
-	fi
 	docker compose exec todo-api psqldef -h postgresql-db -p 5432 -U $$DB_USER -W $$DB_PASSWORD $$DB_NAME -f _tools/postgresql/schema.sql
 
 mysql: ## Access MySQL Database
-	docker compose exec mysql-db mysql -u todo -ptodo
+	docker compose exec mysql-db mysql -u $$DB_USER -p$$DB_PASSWORD
 
 psql: ## Access PostgreSQL Database
-	docker compose exec postgresql-db psql -U todo -d todo -W
+	docker compose exec postgresql-db psql -U $$DB_USER -d $$DB_NAME -W $$DB_PASSWORD
 
 help: ## Show options
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
