@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: help build-local up down logs ps migrate-mysql migrate-psql mysql psql lint format
+.PHONY: help build-local up down logs ps migrate-mysql migrate-psql mysql psql test lint format
 .DEFAULT_GOAL := help
 
 build-local: ## Build docker image to local development
@@ -30,6 +30,9 @@ mysql: ## Access MySQL Database
 
 psql: ## Access PostgreSQL Database
 	docker compose exec postgresql-db psql -U $$DB_USER -d $$DB_NAME -W $$DB_PASSWORD
+
+test: ## Run go test
+	go test -v ./api/...
 
 lint: ## Run go vet
 	go vet ./api/...
