@@ -9,7 +9,13 @@ services:
     ports:
       - "18000:8080"
     environment:
-      PATH: "/root/go/bin:${PATH}"
+      PATH: "/usr/local/go/bin:/root/go/bin:${PATH}"
+      DB_TYPE: ${DB_TYPE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
 
   mysql-db:
     image: mysql:8.0
