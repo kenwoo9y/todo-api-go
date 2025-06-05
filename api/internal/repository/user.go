@@ -4,35 +4,81 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/kenwoo9y/todo-api-go/api/internal/config"
 	"github.com/kenwoo9y/todo-api-go/api/internal/entity"
 )
 
-type UserRepository struct {
-	db *sql.DB
+// UserRepository はユーザーリポジトリのインターフェース
+type UserRepository interface {
+	Create(user *entity.User) error
+	GetAll() ([]entity.User, error)
+	GetByID(id int64) (*entity.User, error)
+	Update(user *entity.User) error
+	Delete(id int64) error
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{db: db}
+// userRepository はUserRepositoryの実装
+type userRepository struct {
+	db     *sql.DB
+	dbType string
 }
 
-func (r *UserRepository) Create(user *entity.User) error {
-	query := `
-		INSERT INTO users (username, email, first_name, last_name, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id`
-
-	return r.db.QueryRow(
-		query,
-		user.Username,
-		user.Email,
-		user.FirstName,
-		user.LastName,
-		time.Now(),
-		time.Now(),
-	).Scan(&user.ID)
+// NewUserRepository はUserRepositoryの新しいインスタンスを作成
+func NewUserRepository(db *sql.DB, cfg *config.Config) UserRepository {
+	return &userRepository{
+		db:     db,
+		dbType: cfg.DBType,
+	}
 }
 
-func (r *UserRepository) GetAll() ([]entity.User, error) {
+func (r *userRepository) Create(user *entity.User) error {
+	var query string
+	if r.dbType == "mysql" {
+		query = `
+			INSERT INTO users (username, email, first_name, last_name, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?)`
+	} else {
+		query = `
+			INSERT INTO users (username, email, first_name, last_name, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6)
+			RETURNING id`
+	}
+
+	now := time.Now()
+	if r.dbType == "mysql" {
+		result, err := r.db.Exec(
+			query,
+			user.Username,
+			user.Email,
+			user.FirstName,
+			user.LastName,
+			now,
+			now,
+		)
+		if err != nil {
+			return err
+		}
+
+		id, err := result.LastInsertId()
+		if err != nil {
+			return err
+		}
+		user.ID = id
+		return nil
+	} else {
+		return r.db.QueryRow(
+			query,
+			user.Username,
+			user.Email,
+			user.FirstName,
+			user.LastName,
+			now,
+			now,
+		).Scan(&user.ID)
+	}
+}
+
+func (r *userRepository) GetAll() ([]entity.User, error) {
 	query := `SELECT * FROM users`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -59,9 +105,15 @@ func (r *UserRepository) GetAll() ([]entity.User, error) {
 	return users, rows.Err()
 }
 
-func (r *UserRepository) GetByID(id int64) (*entity.User, error) {
+func (r *userRepository) GetByID(id int64) (*entity.User, error) {
 	var user entity.User
-	query := `SELECT * FROM users WHERE id = $1`
+	var query string
+	if r.dbType == "mysql" {
+		query = `SELECT * FROM users WHERE id = ?`
+	} else {
+		query = `SELECT * FROM users WHERE id = $1`
+	}
+
 	err := r.db.QueryRow(query, id).Scan(
 		&user.ID,
 		&user.Username,
@@ -77,11 +129,19 @@ func (r *UserRepository) GetByID(id int64) (*entity.User, error) {
 	return &user, err
 }
 
-func (r *UserRepository) Update(user *entity.User) error {
-	query := `
-		UPDATE users
-		SET username = $1, email = $2, first_name = $3, last_name = $4, updated_at = $5
-		WHERE id = $6`
+func (r *userRepository) Update(user *entity.User) error {
+	var query string
+	if r.dbType == "mysql" {
+		query = `
+			UPDATE users
+			SET username = ?, email = ?, first_name = ?, last_name = ?, updated_at = ?
+			WHERE id = ?`
+	} else {
+		query = `
+			UPDATE users
+			SET username = $1, email = $2, first_name = $3, last_name = $4, updated_at = $5
+			WHERE id = $6`
+	}
 
 	_, err := r.db.Exec(
 		query,
@@ -95,8 +155,13 @@ func (r *UserRepository) Update(user *entity.User) error {
 	return err
 }
 
-func (r *UserRepository) Delete(id int64) error {
-	query := `DELETE FROM users WHERE id = $1`
+func (r *userRepository) Delete(id int64) error {
+	var query string
+	if r.dbType == "mysql" {
+		query = `DELETE FROM users WHERE id = ?`
+	} else {
+		query = `DELETE FROM users WHERE id = $1`
+	}
 	_, err := r.db.Exec(query, id)
 	return err
 }

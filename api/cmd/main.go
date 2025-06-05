@@ -41,7 +41,7 @@ func run(ctx context.Context) error {
 	defer database.Close()
 
 	// リポジトリの初期化
-	userRepo := repository.NewUserRepository(database)
+	userRepo := repository.NewUserRepository(database, cfg)
 
 	// ハンドラーの初期化
 	userHandler := handler.NewUserHandler(userRepo)
