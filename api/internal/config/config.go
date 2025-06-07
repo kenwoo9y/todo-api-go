@@ -7,13 +7,13 @@ import (
 )
 
 type Config struct {
-	Port     int
-	DBType   string
-	DBHost   string
-	DBPort   int
-	DBName   string
-	DBUser   string
-	DBPass   string
+	Port   int
+	DBType string
+	DBHost string
+	DBPort int
+	DBName string
+	DBUser string
+	DBPass string
 }
 
 func New() (*Config, error) {
@@ -70,12 +70,12 @@ func New() (*Config, error) {
 	}
 
 	return &Config{
-		Port:     port,
-		DBType:   dbType,
-		DBHost:   dbHost,
-		DBPort:   dbPort,
-		DBName:   dbName,
-		DBUser:   dbUser,
-		DBPass:   dbPass,
+		Port:   port,
+		DBType: dbType,
+		DBHost: dbHost,
+		DBPort: dbPort,
+		DBName: dbName,
+		DBUser: dbUser,
+		DBPass: dbPass,
 	}, nil
 }
