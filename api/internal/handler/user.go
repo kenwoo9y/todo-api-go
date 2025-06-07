@@ -25,6 +25,13 @@ type CreateUserRequest struct {
 	LastName  string `json:"last_name"`
 }
 
+type UpdateUserRequest struct {
+	Username  *string `json:"username,omitempty"`
+	Email     *string `json:"email,omitempty"`
+	FirstName *string `json:"first_name,omitempty"`
+	LastName  *string `json:"last_name,omitempty"`
+}
+
 func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodPost && r.URL.Path == "/users":
@@ -113,32 +120,47 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req CreateUserRequest
+	existingUser, err := h.repo.GetByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if existingUser == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	var req UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if req.Username == "" || req.Email == "" || req.FirstName == "" || req.LastName == "" {
-		http.Error(w, "all fields are required", http.StatusBadRequest)
+	if req.Username != nil {
+		existingUser.Username = *req.Username
+	}
+	if req.Email != nil {
+		existingUser.Email = *req.Email
+	}
+	if req.FirstName != nil {
+		existingUser.FirstName = *req.FirstName
+	}
+	if req.LastName != nil {
+		existingUser.LastName = *req.LastName
+	}
+
+	if req.Username == nil && req.Email == nil && req.FirstName == nil && req.LastName == nil {
+		http.Error(w, "at least one field must be provided for update", http.StatusBadRequest)
 		return
 	}
 
-	user := &entity.User{
-		ID:        id,
-		Username:  req.Username,
-		Email:     req.Email,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-	}
-
-	if err := h.repo.Update(user); err != nil {
+	if err := h.repo.Update(existingUser); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(existingUser)
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
