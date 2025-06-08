@@ -42,12 +42,14 @@ func run(ctx context.Context) error {
 
 	// リポジトリの初期化
 	userRepo := repository.NewUserRepository(database, cfg)
+	taskRepo := repository.NewTaskRepository(database, cfg)
 
 	// ハンドラーの初期化
 	userHandler := handler.NewUserHandler(userRepo)
+	taskHandler := handler.NewTaskHandler(taskRepo)
 
 	// サーバーの設定
-	s := server.SetupServer(userHandler)
+	s := server.SetupServer(userHandler, taskHandler)
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
