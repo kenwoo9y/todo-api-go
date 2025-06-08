@@ -68,7 +68,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		LastName:  req.LastName,
 	}
 
-	if err := h.repo.Create(user); err != nil {
+	if err := h.repo.Create(r.Context(), user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -79,7 +79,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := h.repo.GetAll()
+	users, err := h.repo.GetAll(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -97,7 +97,7 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.repo.GetByID(id)
+	user, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -120,11 +120,12 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingUser, err := h.repo.GetByID(id)
+	existingUser, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	if existingUser == nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
@@ -154,7 +155,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Update(existingUser); err != nil {
+	if err := h.repo.Update(r.Context(), existingUser); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -171,7 +172,7 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Delete(id); err != nil {
+	if err := h.repo.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

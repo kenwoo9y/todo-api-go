@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -10,11 +11,11 @@ import (
 
 // UserRepository はユーザーリポジトリのインターフェース
 type UserRepository interface {
-	Create(user *entity.User) error
-	GetAll() ([]entity.User, error)
-	GetByID(id int64) (*entity.User, error)
-	Update(user *entity.User) error
-	Delete(id int64) error
+	Create(ctx context.Context, user *entity.User) error
+	GetAll(ctx context.Context) ([]entity.User, error)
+	GetByID(ctx context.Context, id int64) (*entity.User, error)
+	Update(ctx context.Context, user *entity.User) error
+	Delete(ctx context.Context, id int64) error
 }
 
 // userRepository はUserRepositoryの実装
@@ -31,7 +32,7 @@ func NewUserRepository(db *sql.DB, cfg *config.Config) UserRepository {
 	}
 }
 
-func (r *userRepository) Create(user *entity.User) error {
+func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	var query string
 	if r.dbType == "mysql" {
 		query = `
@@ -46,7 +47,7 @@ func (r *userRepository) Create(user *entity.User) error {
 
 	now := time.Now()
 	if r.dbType == "mysql" {
-		result, err := r.db.Exec(
+		result, err := r.db.ExecContext(ctx,
 			query,
 			user.Username,
 			user.Email,
@@ -66,7 +67,7 @@ func (r *userRepository) Create(user *entity.User) error {
 		user.ID = id
 		return nil
 	} else {
-		return r.db.QueryRow(
+		return r.db.QueryRowContext(ctx,
 			query,
 			user.Username,
 			user.Email,
@@ -78,9 +79,9 @@ func (r *userRepository) Create(user *entity.User) error {
 	}
 }
 
-func (r *userRepository) GetAll() ([]entity.User, error) {
+func (r *userRepository) GetAll(ctx context.Context) ([]entity.User, error) {
 	query := `SELECT * FROM users`
-	rows, err := r.db.Query(query)
+	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func (r *userRepository) GetAll() ([]entity.User, error) {
 	return users, rows.Err()
 }
 
-func (r *userRepository) GetByID(id int64) (*entity.User, error) {
+func (r *userRepository) GetByID(ctx context.Context, id int64) (*entity.User, error) {
 	var user entity.User
 	var query string
 	if r.dbType == "mysql" {
@@ -114,7 +115,7 @@ func (r *userRepository) GetByID(id int64) (*entity.User, error) {
 		query = `SELECT * FROM users WHERE id = $1`
 	}
 
-	err := r.db.QueryRow(query, id).Scan(
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
@@ -129,7 +130,7 @@ func (r *userRepository) GetByID(id int64) (*entity.User, error) {
 	return &user, err
 }
 
-func (r *userRepository) Update(user *entity.User) error {
+func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
 	var query string
 	if r.dbType == "mysql" {
 		query = `
@@ -143,7 +144,7 @@ func (r *userRepository) Update(user *entity.User) error {
 			WHERE id = $6`
 	}
 
-	_, err := r.db.Exec(
+	_, err := r.db.ExecContext(ctx,
 		query,
 		user.Username,
 		user.Email,
@@ -155,13 +156,13 @@ func (r *userRepository) Update(user *entity.User) error {
 	return err
 }
 
-func (r *userRepository) Delete(id int64) error {
+func (r *userRepository) Delete(ctx context.Context, id int64) error {
 	var query string
 	if r.dbType == "mysql" {
 		query = `DELETE FROM users WHERE id = ?`
 	} else {
 		query = `DELETE FROM users WHERE id = $1`
 	}
-	_, err := r.db.Exec(query, id)
+	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
