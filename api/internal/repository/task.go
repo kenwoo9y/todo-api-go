@@ -79,7 +79,14 @@ func (r *taskRepository) Create(ctx context.Context, task *entity.Task) error {
 }
 
 func (r *taskRepository) GetAll(ctx context.Context) ([]entity.Task, error) {
-	query := `SELECT * FROM tasks`
+	query := `SELECT * FROM tasks
+		ORDER BY
+			CASE status
+				WHEN 'Done' THEN 1
+				ELSE 0
+			END ASC,
+			due_date ASC,
+			created_at DESC`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
