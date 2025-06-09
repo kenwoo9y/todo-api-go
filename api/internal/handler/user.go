@@ -38,6 +38,8 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.Create(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/users":
 		h.GetAll(w, r)
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/users/username/"):
+		h.GetByUsername(w, r)
 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/users/"):
 		h.GetByID(w, r)
 	case r.Method == http.MethodPatch && strings.HasPrefix(r.URL.Path, "/users/"):
@@ -98,6 +100,28 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.repo.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if user == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func (h *UserHandler) GetByUsername(w http.ResponseWriter, r *http.Request) {
+	username := strings.TrimPrefix(r.URL.Path, "/users/username/")
+	if username == "" {
+		http.Error(w, "username is required", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.repo.GetByUsername(r.Context(), username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

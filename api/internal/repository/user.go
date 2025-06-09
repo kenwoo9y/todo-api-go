@@ -14,6 +14,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetAll(ctx context.Context) ([]entity.User, error)
 	GetByID(ctx context.Context, id int64) (*entity.User, error)
+	GetByUsername(ctx context.Context, username string) (*entity.User, error)
 	Update(ctx context.Context, user *entity.User) error
 	Delete(ctx context.Context, id int64) error
 }
@@ -116,6 +117,30 @@ func (r *userRepository) GetByID(ctx context.Context, id int64) (*entity.User, e
 	}
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &user, err
+}
+
+func (r *userRepository) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
+	var user entity.User
+	var query string
+	if r.dbType == "mysql" {
+		query = `SELECT * FROM users WHERE username = ?`
+	} else {
+		query = `SELECT * FROM users WHERE username = $1`
+	}
+
+	err := r.db.QueryRowContext(ctx, query, username).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Email,
