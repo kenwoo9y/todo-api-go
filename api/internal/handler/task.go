@@ -41,6 +41,8 @@ func (h *TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.Create(w, r)
 	case r.Method == http.MethodGet && r.URL.Path == "/tasks":
 		h.GetAll(w, r)
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/users/") && strings.HasSuffix(r.URL.Path, "/tasks"):
+		h.GetByOwnerID(w, r)
 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/tasks/"):
 		h.GetByID(w, r)
 	case r.Method == http.MethodPatch && strings.HasPrefix(r.URL.Path, "/tasks/"):
@@ -114,6 +116,30 @@ func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(task)
+}
+
+func (h *TaskHandler) GetByOwnerID(w http.ResponseWriter, r *http.Request) {
+	// /users/{id}/tasks から {id} を抽出
+	pathParts := strings.Split(r.URL.Path, "/")
+	if len(pathParts) != 4 {
+		http.Error(w, "invalid path format", http.StatusBadRequest)
+		return
+	}
+	ownerIDStr := pathParts[2]
+	ownerID, err := strconv.ParseInt(ownerIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid owner id", http.StatusBadRequest)
+		return
+	}
+
+	tasks, err := h.repo.GetByOwnerID(r.Context(), ownerID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tasks)
 }
 
 func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {

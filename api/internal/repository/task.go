@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/kenwoo9y/todo-api-go/api/internal/config"
@@ -13,6 +14,7 @@ type TaskRepository interface {
 	Create(ctx context.Context, task *entity.Task) error
 	GetAll(ctx context.Context) ([]entity.Task, error)
 	GetByID(ctx context.Context, id int64) (*entity.Task, error)
+	GetByOwnerID(ctx context.Context, ownerID int64) ([]entity.Task, error)
 	Update(ctx context.Context, task *entity.Task) error
 	Delete(ctx context.Context, id int64) error
 }
@@ -136,6 +138,51 @@ func (r *taskRepository) GetByID(ctx context.Context, id int64) (*entity.Task, e
 		return nil, nil
 	}
 	return &task, err
+}
+
+func (r *taskRepository) GetByOwnerID(ctx context.Context, ownerID int64) ([]entity.Task, error) {
+	baseQuery := `
+		SELECT * FROM tasks 
+		WHERE owner_id = %s
+		ORDER BY
+			CASE status
+				WHEN 'Done' THEN 1
+				ELSE 0
+			END ASC,
+			due_date ASC,
+			created_at DESC`
+
+	var query string
+	if r.dbType == "mysql" {
+		query = fmt.Sprintf(baseQuery, "?")
+	} else {
+		query = fmt.Sprintf(baseQuery, "$1")
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []entity.Task
+	for rows.Next() {
+		var task entity.Task
+		if err := rows.Scan(
+			&task.ID,
+			&task.Title,
+			&task.Description,
+			&task.DueDate,
+			&task.Status,
+			&task.OwnerID,
+			&task.CreatedAt,
+			&task.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks, rows.Err()
 }
 
 func (r *taskRepository) Update(ctx context.Context, task *entity.Task) error {

@@ -40,7 +40,7 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.GetAll(w, r)
 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/users/username/"):
 		h.GetByUsername(w, r)
-	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/users/"):
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/users/") && !strings.Contains(r.URL.Path, "/tasks"):
 		h.GetByID(w, r)
 	case r.Method == http.MethodPatch && strings.HasPrefix(r.URL.Path, "/users/"):
 		h.Update(w, r)
