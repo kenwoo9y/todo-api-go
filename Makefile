@@ -1,7 +1,7 @@
 include .env
 export
 
-.PHONY: help build-local up down logs ps migrate-mysql migrate-psql mysql psql test lint format
+.PHONY: help build-local up down logs ps migrate-mysql migrate-psql mysql psql test test-coverage lint format
 .DEFAULT_GOAL := help
 
 build-local: ## Build docker image to local development
@@ -33,6 +33,9 @@ psql: ## Access PostgreSQL Database
 
 test: ## Run go test
 	cd api && go test -v ./...
+
+test-coverage: ## Run go test with coverage
+	cd api && go test ./... -v -coverprofile=coverage.out
 
 lint: ## Run go vet
 	cd api && go vet ./...
