@@ -9,7 +9,6 @@ import (
 	"github.com/kenwoo9y/todo-api-go/api/internal/entity"
 )
 
-// UserRepository はユーザーリポジトリのインターフェース
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetAll(ctx context.Context) ([]entity.User, error)
@@ -19,13 +18,11 @@ type UserRepository interface {
 	Delete(ctx context.Context, id int64) error
 }
 
-// userRepository はUserRepositoryの実装
 type userRepository struct {
 	db     *sql.DB
 	dbType string
 }
 
-// NewUserRepository はUserRepositoryの新しいインスタンスを作成
 func NewUserRepository(db *sql.DB, cfg *config.Config) UserRepository {
 	return &userRepository{
 		db:     db,
