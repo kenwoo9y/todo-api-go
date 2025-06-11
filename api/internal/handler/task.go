@@ -3,12 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/kenwoo9y/todo-api-go/api/internal/entity"
 	"github.com/kenwoo9y/todo-api-go/api/internal/repository"
+	"github.com/kenwoo9y/todo-api-go/api/pkg/common"
 )
 
 type TaskHandler struct {
@@ -50,19 +50,18 @@ func (h *TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/tasks/"):
 		h.Delete(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		common.ErrorJSONResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
 func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var req CreateTaskRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if !common.ValidateRequestMethod(w, r, http.MethodPost) {
 		return
 	}
 
-	if req.Title == "" || req.Description == "" || req.Status == "" || req.OwnerID == 0 {
-		http.Error(w, "all fields are required", http.StatusBadRequest)
+	var req CreateTaskRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		common.HandleError(w, err)
 		return
 	}
 
@@ -75,95 +74,97 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Create(r.Context(), task); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(task)
+	common.JSONResponse(w, http.StatusCreated, task)
 }
 
 func (h *TaskHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	tasks, err := h.repo.GetAll(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !common.ValidateRequestMethod(w, r, http.MethodGet) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+	tasks, err := h.repo.GetAll(r.Context())
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	common.JSONResponse(w, http.StatusOK, tasks)
 }
 
 func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	if !common.ValidateRequestMethod(w, r, http.MethodGet) {
+		return
+	}
+
+	id, err := common.ExtractIDFromPath(r.URL.Path, "/tasks/")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		common.HandleError(w, common.ErrInvalidID)
 		return
 	}
 
 	task, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
 	if task == nil {
-		http.Error(w, "task not found", http.StatusNotFound)
+		common.HandleError(w, common.ErrNotFound)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(task)
+	common.JSONResponse(w, http.StatusOK, task)
 }
 
 func (h *TaskHandler) GetByOwnerID(w http.ResponseWriter, r *http.Request) {
-	// /users/{id}/tasks から {id} を抽出
-	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) != 4 {
-		http.Error(w, "invalid path format", http.StatusBadRequest)
+	if !common.ValidateRequestMethod(w, r, http.MethodGet) {
 		return
 	}
-	ownerIDStr := pathParts[2]
-	ownerID, err := strconv.ParseInt(ownerIDStr, 10, 64)
+
+	ownerID, err := common.ExtractOwnerIDFromPath(r.URL.Path)
 	if err != nil {
-		http.Error(w, "invalid owner id", http.StatusBadRequest)
+		common.HandleError(w, err)
 		return
 	}
 
 	tasks, err := h.repo.GetByOwnerID(r.Context(), ownerID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+	common.JSONResponse(w, http.StatusOK, tasks)
 }
 
 func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	if !common.ValidateRequestMethod(w, r, http.MethodPatch) {
+		return
+	}
+
+	id, err := common.ExtractIDFromPath(r.URL.Path, "/tasks/")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		common.HandleError(w, common.ErrInvalidID)
 		return
 	}
 
 	existingTask, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
 	if existingTask == nil {
-		http.Error(w, "task not found", http.StatusNotFound)
+		common.HandleError(w, common.ErrNotFound)
 		return
 	}
 
 	var req UpdateTaskRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		common.HandleError(w, err)
 		return
 	}
 
@@ -184,31 +185,33 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Title == nil && req.Description == nil && req.DueDate == nil && req.Status == nil && req.OwnerID == nil {
-		http.Error(w, "at least one field must be provided for update", http.StatusBadRequest)
+		common.ErrorJSONResponse(w, http.StatusBadRequest, "at least one field must be provided for update")
 		return
 	}
 
 	if err := h.repo.Update(r.Context(), existingTask); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existingTask)
+	common.JSONResponse(w, http.StatusOK, existingTask)
 }
 
 func (h *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	if !common.ValidateRequestMethod(w, r, http.MethodDelete) {
+		return
+	}
+
+	id, err := common.ExtractIDFromPath(r.URL.Path, "/tasks/")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		common.HandleError(w, common.ErrInvalidID)
 		return
 	}
 
 	if err := h.repo.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	common.JSONResponse(w, http.StatusNoContent, nil)
 }

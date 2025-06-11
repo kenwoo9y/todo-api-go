@@ -3,11 +3,11 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/kenwoo9y/todo-api-go/api/internal/entity"
 	"github.com/kenwoo9y/todo-api-go/api/internal/repository"
+	"github.com/kenwoo9y/todo-api-go/api/pkg/common"
 )
 
 type UserHandler struct {
@@ -47,19 +47,18 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/users/"):
 		h.Delete(w, r)
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		common.ErrorJSONResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var req CreateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if !common.ValidateRequestMethod(w, r, http.MethodPost) {
 		return
 	}
 
-	if req.Username == "" || req.Email == "" || req.FirstName == "" || req.LastName == "" {
-		http.Error(w, "all fields are required", http.StatusBadRequest)
+	var req CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		common.HandleError(w, err)
 		return
 	}
 
@@ -71,93 +70,102 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repo.Create(r.Context(), user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	common.JSONResponse(w, http.StatusCreated, user)
 }
 
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := h.repo.GetAll(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if !common.ValidateRequestMethod(w, r, http.MethodGet) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	users, err := h.repo.GetAll(r.Context())
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	common.JSONResponse(w, http.StatusOK, users)
 }
 
 func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	if !common.ValidateRequestMethod(w, r, http.MethodGet) {
+		return
+	}
+
+	id, err := common.ExtractIDFromPath(r.URL.Path, "/users/")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		common.HandleError(w, common.ErrInvalidID)
 		return
 	}
 
 	user, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
 	if user == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		common.HandleError(w, common.ErrNotFound)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	common.JSONResponse(w, http.StatusOK, user)
 }
 
 func (h *UserHandler) GetByUsername(w http.ResponseWriter, r *http.Request) {
+	if !common.ValidateRequestMethod(w, r, http.MethodGet) {
+		return
+	}
+
 	username := strings.TrimPrefix(r.URL.Path, "/users/username/")
 	if username == "" {
-		http.Error(w, "username is required", http.StatusBadRequest)
+		common.HandleError(w, common.ErrInvalidID)
 		return
 	}
 
 	user, err := h.repo.GetByUsername(r.Context(), username)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
 	if user == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		common.HandleError(w, common.ErrNotFound)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	common.JSONResponse(w, http.StatusOK, user)
 }
 
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	if !common.ValidateRequestMethod(w, r, http.MethodPatch) {
+		return
+	}
+
+	id, err := common.ExtractIDFromPath(r.URL.Path, "/users/")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		common.HandleError(w, common.ErrInvalidID)
 		return
 	}
 
 	existingUser, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
 	if existingUser == nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		common.HandleError(w, common.ErrNotFound)
 		return
 	}
 
 	var req UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		common.HandleError(w, err)
 		return
 	}
 
@@ -175,31 +183,33 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Username == nil && req.Email == nil && req.FirstName == nil && req.LastName == nil {
-		http.Error(w, "at least one field must be provided for update", http.StatusBadRequest)
+		common.ErrorJSONResponse(w, http.StatusBadRequest, "at least one field must be provided for update")
 		return
 	}
 
 	if err := h.repo.Update(r.Context(), existingUser); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existingUser)
+	common.JSONResponse(w, http.StatusOK, existingUser)
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	if !common.ValidateRequestMethod(w, r, http.MethodDelete) {
+		return
+	}
+
+	id, err := common.ExtractIDFromPath(r.URL.Path, "/users/")
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		common.HandleError(w, common.ErrInvalidID)
 		return
 	}
 
 	if err := h.repo.Delete(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		common.HandleError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	common.JSONResponse(w, http.StatusNoContent, nil)
 }
