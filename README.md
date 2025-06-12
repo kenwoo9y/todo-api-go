@@ -16,6 +16,7 @@ This is a ToDo Web API implemented with Go, designed for simplicity and extensib
 ### Backend
 - Standard library [net/http](https://pkg.go.dev/net/http) - Go's built-in HTTP server
 - Standard library [database/sql](https://pkg.go.dev/database/sql) - Go's built-in database interface
+- [sqldef/sqldef](https://github.com/sqldef/sqldef) - Database migration tool
 
 ### Database
 - [MySQL](https://www.mysql.com/) v8.0 - Primary relational database
