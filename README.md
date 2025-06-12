@@ -27,7 +27,7 @@ This is a ToDo Web API implemented with Go, designed for simplicity and extensib
 ### Testing & Quality Assurance
 - [go testing](https://pkg.go.dev/testing) - Go's built-in testing framework
 - [go vet](https://pkg.go.dev/cmd/vet) - Go's built-in static analysis tool
-- [go fmt](https://pkg.go.dev/cmd/gofmt) - Go's built-in code formatter
+- [gofmt](https://pkg.go.dev/cmd/gofmt) - Go's built-in code formatter
 
 ### CI/CD
 - GitHub Actions - Continuous Integration and Deployment
