@@ -1,0 +1,56 @@
+name: Go CI Workflow
+
+on:
+  pull_request:
+    branches: main
+
+defaults:
+  run:
+    working-directory: ./api  # 作業ディレクトリを指定
+
+jobs:
+  go-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      # コードのチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Goのセットアップ
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23' # Goのバージョンを指定
+
+      # 依存関係のインストール
+      - name: Install dependencies
+        run: go mod tidy
+
+      # Gofmtの実行
+      - name: Run Gofmt
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Code is not formatted. Run gofmt."
+            gofmt -d .
+            exit 1
+          fi
+
+      # Go Vetの実行
+      - name: Run Go Vet
+        run: go vet ./...
+
+      # Goテストとカバレッジの実行
+      - name: Run Go Test with coverage
+        run: go test ./... -v -coverprofile=coverage.out
+
+      # カバレッジの確認
+      - name: Check coverage
+        run: |
+          go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//' > coverage.txt
+          coverage=$(cat coverage.txt)
+          echo "Total coverage: $coverage%"
+          if (( $(echo "$coverage < 50.0" | bc -l) )); then
+            echo "Test coverage ($coverage%) is below 50%"
+            exit 1
+          fi
