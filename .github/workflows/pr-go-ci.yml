@@ -47,7 +47,7 @@ jobs:
       # カバレッジの確認
       - name: Check coverage
         run: |
-          go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//' > coverage.txt
+          go tool cover -func=coverage.out | grep -v "vendor" | grep total | awk '{print $3}' | sed 's/%//' > coverage.txt
           coverage=$(cat coverage.txt)
           echo "Total coverage: $coverage%"
           if (( $(echo "$coverage < 50.0" | bc -l) )); then
