@@ -30,9 +30,9 @@ jobs:
       # Gofmtの実行
       - name: Run Gofmt
         run: |
-          if [ -n "$(find . -type f -name '*.go' -not -path './vendor/*' | xargs gofmt -l)" ]; then
+          if [ -n "$(find . -type f -name '*.go' -not -path 'pkg/vendor/*' | xargs gofmt -l)" ]; then
             echo "Code is not formatted. Run gofmt."
-            find . -type f -name '*.go' -not -path './vendor/*' | xargs gofmt -d
+            find . -type f -name '*.go' -not -path 'pkg/vendor/*' | xargs gofmt -d
             exit 1
           fi
 
