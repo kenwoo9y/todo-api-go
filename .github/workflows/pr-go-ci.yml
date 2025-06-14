@@ -46,7 +46,9 @@ jobs:
       
       # vendorディレクトリを除外したカバレッジの実行
       - name: Remove vendor from coverage
-        run: grep -vE '(^|/)vendor/' coverage.out > coverage_novendor.out
+        run: |
+         grep vendor coverage.out | head -10
+         grep -vE '(^|/)vendor/' coverage.out > coverage_novendor.out
 
       # カバレッジの確認
       - name: Check coverage
