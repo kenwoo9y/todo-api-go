@@ -16,7 +16,8 @@ RUN apt-get update
 
 COPY --from=deploy-builder /app/app .
 
-EXPOSE 8080
+ARG PORT=8080
+EXPOSE ${PORT}
 CMD ["./app"]
 
 # ---------------------------------------------------
