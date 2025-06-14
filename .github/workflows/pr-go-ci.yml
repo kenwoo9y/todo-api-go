@@ -43,11 +43,15 @@ jobs:
       # Goテストとカバレッジの実行
       - name: Run Go Test with coverage
         run: go test ./... -v -coverprofile=coverage.out
+      
+      # vendorディレクトリを除外したカバレッジの実行
+      - name: Remove vendor from coverage
+        run: grep -v "/vendor/" coverage.out > coverage_novendor.out
 
       # カバレッジの確認
       - name: Check coverage
         run: |
-          go tool cover -func=coverage.out | grep -v "vendor" | grep total | awk '{print $3}' | sed 's/%//' > coverage.txt
+          go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//' > coverage.txt
           coverage=$(cat coverage.txt)
           echo "Total coverage: $coverage%"
           if (( $(echo "$coverage < 50.0" | bc -l) )); then
