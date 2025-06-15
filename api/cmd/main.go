@@ -49,7 +49,7 @@ func run(ctx context.Context) error {
 	taskHandler := handler.NewTaskHandler(taskRepo)
 
 	// サーバーの設定
-	s := server.SetupServer(userHandler, taskHandler)
+	s := server.SetupServer(cfg, userHandler, taskHandler)
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
