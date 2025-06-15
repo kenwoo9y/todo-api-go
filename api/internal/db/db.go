@@ -3,9 +3,10 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
+
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"os"
 )
 
 func NewDB() (*sql.DB, error) {
@@ -17,16 +18,19 @@ func NewDB() (*sql.DB, error) {
 	dbname := os.Getenv("DB_NAME")
 
 	var dsn string
+	var driverName string
 	switch dbType {
 	case "mysql":
+		driverName = "mysql"
 		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 			user, password, host, port, dbname)
 	case "postgresql":
+		driverName = "postgres"
 		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 			host, port, user, password, dbname)
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
 	}
 
-	return sql.Open(dbType, dsn)
+	return sql.Open(driverName, dsn)
 }
