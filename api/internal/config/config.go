@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
-	Port   int
-	DBType string
-	DBHost string
-	DBPort int
-	DBName string
-	DBUser string
-	DBPass string
+	Port        int
+	DBType      string
+	DBHost      string
+	DBPort      int
+	DBName      string
+	DBUser      string
+	DBPass      string
+	CORSOrigins []string
 }
 
 func New() (*Config, error) {
@@ -69,13 +71,25 @@ func New() (*Config, error) {
 		return nil, fmt.Errorf("DB_PASSWORD is required")
 	}
 
+	// CORSの設定を取得
+	corsOriginsStr := os.Getenv("CORS_ORIGINS")
+	if corsOriginsStr == "" {
+		return nil, fmt.Errorf("CORS_ORIGINS is required")
+	}
+
+	corsOrigins := strings.Split(corsOriginsStr, ",")
+	if len(corsOrigins) == 0 {
+		return nil, fmt.Errorf("CORS_ORIGINS must contain at least one origin")
+	}
+
 	return &Config{
-		Port:   port,
-		DBType: dbType,
-		DBHost: dbHost,
-		DBPort: dbPort,
-		DBName: dbName,
-		DBUser: dbUser,
-		DBPass: dbPass,
+		Port:        port,
+		DBType:      dbType,
+		DBHost:      dbHost,
+		DBPort:      dbPort,
+		DBName:      dbName,
+		DBUser:      dbUser,
+		DBPass:      dbPass,
+		CORSOrigins: corsOrigins,
 	}, nil
 }
