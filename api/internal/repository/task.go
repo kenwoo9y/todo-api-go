@@ -36,11 +36,11 @@ func (r *taskRepository) Create(ctx context.Context, task *entity.Task) error {
 	if r.dbType == "mysql" {
 		query = `
 			INSERT INTO tasks (title, description, due_date, status, owner_id, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?)`
+			VALUES (?, ?, STR_TO_DATE(?, '%Y-%m-%d'), ?, ?, ?, ?)`
 	} else {
 		query = `
 			INSERT INTO tasks (title, description, due_date, status, owner_id, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			VALUES ($1, $2, $3::date, $4, $5, $6, $7)
 			RETURNING id`
 	}
 
@@ -81,7 +81,7 @@ func (r *taskRepository) Create(ctx context.Context, task *entity.Task) error {
 }
 
 func (r *taskRepository) GetAll(ctx context.Context) ([]entity.Task, error) {
-	query := `SELECT * FROM tasks
+	query := `SELECT id, title, description, DATE_FORMAT(due_date, '%Y-%m-%d') as due_date, status, owner_id, created_at, updated_at FROM tasks
 		ORDER BY
 			CASE status
 				WHEN 'Done' THEN 1
@@ -119,9 +119,9 @@ func (r *taskRepository) GetByID(ctx context.Context, id int64) (*entity.Task, e
 	var task entity.Task
 	var query string
 	if r.dbType == "mysql" {
-		query = `SELECT * FROM tasks WHERE id = ?`
+		query = `SELECT id, title, description, DATE_FORMAT(due_date, '%Y-%m-%d') as due_date, status, owner_id, created_at, updated_at FROM tasks WHERE id = ?`
 	} else {
-		query = `SELECT * FROM tasks WHERE id = $1`
+		query = `SELECT id, title, description, TO_CHAR(due_date, 'YYYY-MM-DD') as due_date, status, owner_id, created_at, updated_at FROM tasks WHERE id = $1`
 	}
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
@@ -142,7 +142,7 @@ func (r *taskRepository) GetByID(ctx context.Context, id int64) (*entity.Task, e
 
 func (r *taskRepository) GetByOwnerID(ctx context.Context, ownerID int64) ([]entity.Task, error) {
 	baseQuery := `
-		SELECT * FROM tasks 
+		SELECT id, title, description, DATE_FORMAT(due_date, '%%Y-%%m-%%d') as due_date, status, owner_id, created_at, updated_at FROM tasks 
 		WHERE owner_id = %s
 		ORDER BY
 			CASE status
@@ -156,7 +156,16 @@ func (r *taskRepository) GetByOwnerID(ctx context.Context, ownerID int64) ([]ent
 	if r.dbType == "mysql" {
 		query = fmt.Sprintf(baseQuery, "?")
 	} else {
-		query = fmt.Sprintf(baseQuery, "$1")
+		query = fmt.Sprintf(`
+			SELECT id, title, description, TO_CHAR(due_date, 'YYYY-MM-DD') as due_date, status, owner_id, created_at, updated_at FROM tasks 
+			WHERE owner_id = $1
+			ORDER BY
+				CASE status
+					WHEN 'Done' THEN 1
+					ELSE 0
+				END ASC,
+				due_date ASC,
+				created_at DESC`)
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, ownerID)
@@ -190,12 +199,12 @@ func (r *taskRepository) Update(ctx context.Context, task *entity.Task) error {
 	if r.dbType == "mysql" {
 		query = `
 			UPDATE tasks
-			SET title = ?, description = ?, due_date = ?, status = ?, owner_id = ?, updated_at = ?
+			SET title = ?, description = ?, due_date = STR_TO_DATE(?, '%Y-%m-%d'), status = ?, owner_id = ?, updated_at = ?
 			WHERE id = ?`
 	} else {
 		query = `
 			UPDATE tasks
-			SET title = $1, description = $2, due_date = $3, status = $4, owner_id = $5, updated_at = $6
+			SET title = $1, description = $2, due_date = $3::date, status = $4, owner_id = $5, updated_at = $6
 			WHERE id = $7`
 	}
 

@@ -20,19 +20,19 @@ func NewTaskHandler(repo repository.TaskRepository) *TaskHandler {
 }
 
 type CreateTaskRequest struct {
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	DueDate     *time.Time `json:"due_date"`
-	Status      string     `json:"status"`
-	OwnerID     int64      `json:"owner_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	DueDate     string `json:"due_date"`
+	Status      string `json:"status"`
+	OwnerID     int64  `json:"owner_id"`
 }
 
 type UpdateTaskRequest struct {
-	Title       *string    `json:"title,omitempty"`
-	Description *string    `json:"description,omitempty"`
-	DueDate     *time.Time `json:"due_date,omitempty"`
-	Status      *string    `json:"status,omitempty"`
-	OwnerID     *int64     `json:"owner_id,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	DueDate     *string `json:"due_date,omitempty"`
+	Status      *string `json:"status,omitempty"`
+	OwnerID     *int64  `json:"owner_id,omitempty"`
 }
 
 func (h *TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +62,11 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateTaskRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		common.HandleError(w, err)
+		return
+	}
+
+	if _, err := time.Parse("2006-01-02", req.DueDate); err != nil {
+		common.ErrorJSONResponse(w, http.StatusBadRequest, "invalid due_date format. expected format: YYYY-MM-DD")
 		return
 	}
 
@@ -175,7 +180,7 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 		existingTask.Description = *req.Description
 	}
 	if req.DueDate != nil {
-		existingTask.DueDate = req.DueDate
+		existingTask.DueDate = *req.DueDate
 	}
 	if req.Status != nil {
 		existingTask.Status = entity.TaskStatus(*req.Status)
