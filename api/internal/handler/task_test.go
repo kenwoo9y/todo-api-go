@@ -49,7 +49,7 @@ func (m *MockTaskRepository) Delete(ctx context.Context, id int64) error {
 }
 
 func TestTaskHandler_Create(t *testing.T) {
-	now := time.Now()
+	now := time.Now().Format("2006-01-02")
 	tests := []struct {
 		name           string
 		requestBody    CreateTaskRequest
@@ -62,7 +62,7 @@ func TestTaskHandler_Create(t *testing.T) {
 			requestBody: CreateTaskRequest{
 				Title:       "テストタスク",
 				Description: "テストの説明",
-				DueDate:     &now,
+				DueDate:     now,
 				Status:      "Todo",
 				OwnerID:     1,
 			},
@@ -79,7 +79,7 @@ func TestTaskHandler_Create(t *testing.T) {
 			requestBody: CreateTaskRequest{
 				Title:       "テストタスク",
 				Description: "テストの説明",
-				DueDate:     &now,
+				DueDate:     now,
 				Status:      "Todo",
 				OwnerID:     1,
 			},
@@ -89,6 +89,23 @@ func TestTaskHandler_Create(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusInternalServerError,
+			expectedError:  true,
+		},
+		{
+			name: "異常系：不正な日付フォーマット",
+			requestBody: CreateTaskRequest{
+				Title:       "テストタスク",
+				Description: "テストの説明",
+				DueDate:     "2025/06/15", // 不正なフォーマット
+				Status:      "Todo",
+				OwnerID:     1,
+			},
+			mockSetup: func(m *MockTaskRepository) {
+				m.createFunc = func(ctx context.Context, task *entity.Task) error {
+					return nil
+				}
+			},
+			expectedStatus: http.StatusBadRequest,
 			expectedError:  true,
 		},
 	}
@@ -149,7 +166,7 @@ func TestTaskHandler_GetByID(t *testing.T) {
 						ID:          1,
 						Title:       "テストタスク",
 						Description: "テストの説明",
-						DueDate:     &now,
+						DueDate:     now.Format("2006-01-02"),
 						Status:      entity.TaskStatusTodo,
 						OwnerID:     1,
 					}, nil
@@ -223,7 +240,7 @@ func TestTaskHandler_Update(t *testing.T) {
 						ID:          1,
 						Title:       "テストタスク",
 						Description: "テストの説明",
-						DueDate:     &now,
+						DueDate:     now.Format("2006-01-02"),
 						Status:      entity.TaskStatusTodo,
 						OwnerID:     1,
 					}, nil
@@ -249,7 +266,7 @@ func TestTaskHandler_Update(t *testing.T) {
 						ID:          1,
 						Title:       "テストタスク",
 						Description: "テストの説明",
-						DueDate:     &now,
+						DueDate:     now.Format("2006-01-02"),
 						Status:      entity.TaskStatusTodo,
 						OwnerID:     1,
 					}, nil
