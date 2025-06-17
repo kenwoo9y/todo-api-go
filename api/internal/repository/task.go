@@ -81,14 +81,26 @@ func (r *taskRepository) Create(ctx context.Context, task *entity.Task) error {
 }
 
 func (r *taskRepository) GetAll(ctx context.Context) ([]entity.Task, error) {
-	query := `SELECT id, title, description, DATE_FORMAT(due_date, '%Y-%m-%d') as due_date, status, owner_id, created_at, updated_at FROM tasks
-		ORDER BY
-			CASE status
-				WHEN 'Done' THEN 1
-				ELSE 0
-			END ASC,
-			due_date ASC,
-			created_at DESC`
+	var query string
+	if r.dbType == "mysql" {
+		query = `SELECT id, title, description, DATE_FORMAT(due_date, '%Y-%m-%d') as due_date, status, owner_id, created_at, updated_at FROM tasks
+			ORDER BY
+				CASE status
+					WHEN 'Done' THEN 1
+					ELSE 0
+				END ASC,
+				due_date ASC,
+				created_at DESC`
+	} else {
+		query = `SELECT id, title, description, TO_CHAR(due_date, 'YYYY-MM-DD') as due_date, status, owner_id, created_at, updated_at FROM tasks
+			ORDER BY
+				CASE status
+					WHEN 'Done' THEN 1
+					ELSE 0
+				END ASC,
+				due_date ASC,
+				created_at DESC`
+	}
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
