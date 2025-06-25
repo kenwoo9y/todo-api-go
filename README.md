@@ -97,6 +97,7 @@ This is a ToDo Web API implemented with Go, designed for simplicity and extensib
 - Apply code formatting:
     ```
     $ make format
+    ```
 
 ## Database
 ### Switching Database
@@ -114,7 +115,7 @@ DB_PASSWORD=<your_password>
 
 For PostgreSQL:
 ```
-DB_TYPE=psql
+DB_TYPE=postgresql
 DB_HOST=postgresql-db
 DB_PORT=5432
 DB_NAME=todo
