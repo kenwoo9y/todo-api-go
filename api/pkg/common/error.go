@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// 共通エラー定義
+// Common error definitions
 var (
 	ErrInvalidPathFormat = errors.New("invalid path format")
 	ErrInvalidID         = errors.New("invalid id")
@@ -14,7 +14,7 @@ var (
 	ErrInternalServer    = errors.New("internal server error")
 )
 
-// エラーを適切なHTTPレスポンスに変換する共通関数
+// Common function to convert errors to appropriate HTTP responses
 func HandleError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrInvalidPathFormat),

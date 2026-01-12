@@ -33,22 +33,22 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	// DB接続
+	// Connect to database
 	database, err := db.NewDB()
 	if err != nil {
 		return err
 	}
 	defer database.Close()
 
-	// リポジトリの初期化
+	// Initialize repositories
 	userRepo := repository.NewUserRepository(database, cfg)
 	taskRepo := repository.NewTaskRepository(database, cfg)
 
-	// ハンドラーの初期化
+	// Initialize handlers
 	userHandler := handler.NewUserHandler(userRepo)
 	taskHandler := handler.NewTaskHandler(taskRepo)
 
-	// サーバーの設定
+	// Setup server
 	s := server.SetupServer(cfg, userHandler, taskHandler)
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))

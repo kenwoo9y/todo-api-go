@@ -14,7 +14,7 @@ import (
 	"github.com/kenwoo9y/todo-api-go/api/pkg/common"
 )
 
-// MockTaskRepository は repository.TaskRepository のモック実装
+// MockTaskRepository is a mock implementation of repository.TaskRepository
 type MockTaskRepository struct {
 	createFunc       func(ctx context.Context, task *entity.Task) error
 	getAllFunc       func(ctx context.Context) ([]entity.Task, error)
@@ -58,7 +58,7 @@ func TestTaskHandler_Create(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name: "正常系：タスク作成成功",
+			name: "Success: Task creation succeeds",
 			requestBody: CreateTaskRequest{
 				Title:       "テストタスク",
 				Description: "テストの説明",
@@ -75,7 +75,7 @@ func TestTaskHandler_Create(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "異常系：リポジトリエラー",
+			name: "Error: Repository error",
 			requestBody: CreateTaskRequest{
 				Title:       "テストタスク",
 				Description: "テストの説明",
@@ -92,11 +92,11 @@ func TestTaskHandler_Create(t *testing.T) {
 			expectedError:  true,
 		},
 		{
-			name: "異常系：不正な日付フォーマット",
+			name: "Error: Invalid date format",
 			requestBody: CreateTaskRequest{
 				Title:       "テストタスク",
 				Description: "テストの説明",
-				DueDate:     "2025/06/15", // 不正なフォーマット
+				DueDate:     "2025/06/15", // Invalid format
 				Status:      "Todo",
 				OwnerID:     1,
 			},
@@ -158,7 +158,7 @@ func TestTaskHandler_GetByID(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name:   "正常系：タスク取得成功",
+			name:   "Success: Task retrieval succeeds",
 			taskID: 1,
 			mockSetup: func(m *MockTaskRepository) {
 				m.getByIDFunc = func(ctx context.Context, id int64) (*entity.Task, error) {
@@ -176,7 +176,7 @@ func TestTaskHandler_GetByID(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name:   "異常系：タスクが見つからない",
+			name:   "Error: Task not found",
 			taskID: 999,
 			mockSetup: func(m *MockTaskRepository) {
 				m.getByIDFunc = func(ctx context.Context, id int64) (*entity.Task, error) {
@@ -227,7 +227,7 @@ func TestTaskHandler_Update(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name:   "正常系：タスク更新成功",
+			name:   "Success: Task update succeeds",
 			taskID: 1,
 			requestBody: UpdateTaskRequest{
 				Title:       taskStringPtr("更新されたタスク"),
@@ -253,7 +253,7 @@ func TestTaskHandler_Update(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name:   "異常系：更新フィールドが空",
+			name:   "Error: Update fields are empty",
 			taskID: 1,
 			requestBody: UpdateTaskRequest{
 				Title:       nil,
@@ -312,7 +312,7 @@ func TestTaskHandler_Update(t *testing.T) {
 	}
 }
 
-// ヘルパー関数
+// Helper function
 func taskStringPtr(s string) *string {
 	return &s
 }

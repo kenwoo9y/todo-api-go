@@ -20,7 +20,7 @@ func (c *CORSConfig) CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		if origin != "" {
-			// 許可されたオリジンのリストに含まれているか、または*が設定されているかチェック
+			// Check if the origin is in the allowed list or if * is set
 			allowed := false
 			for _, allowedOrigin := range c.Origins {
 				if allowedOrigin == "*" || allowedOrigin == origin {
@@ -38,7 +38,7 @@ func (c *CORSConfig) CORS(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// OPTIONSリクエストの場合は、ここで処理を終了
+		// For OPTIONS requests, terminate processing here
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return

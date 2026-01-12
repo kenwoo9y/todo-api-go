@@ -5,19 +5,19 @@ import (
 	"net/http"
 )
 
-// エラーレスポンスの共通構造体
+// Common error response structure
 type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-// JSONレスポンスを送信する共通関数
+// Common function to send JSON responses
 func JSONResponse(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
 }
 
-// エラーレスポンスを送信する共通関数
+// Common function to send error responses
 func ErrorJSONResponse(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

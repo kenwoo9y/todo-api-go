@@ -140,3 +140,112 @@ $ make migrate-psql
     ```
     $ make psql
     ```
+
+---
+## セットアップ
+### 初期セットアップ
+1. リポジトリをクローン:
+    ```
+    $ git clone https://github.com/kenwoo9y/todo-api-go.git
+    $ cd todo-api-go
+    ```
+
+2. 環境変数ファイルを作成:
+    ```
+    $ cp .env.example .env
+    ```
+    必要に応じて `.env` ファイルを編集。
+
+3. 必要なDockerイメージをビルド:
+    ```
+    $ make build-local
+    ```
+
+4. コンテナを起動:
+    ```
+    $ make up
+    ```
+
+5. データベースマイグレーションを適用:
+    ```
+    $ make migrate-mysql
+    $ make migrate-psql
+    ```
+
+## 使用方法
+### コンテナ管理
+- コンテナの状態を確認:
+    ```
+    $ make ps
+    ```
+- コンテナのログを表示:
+    ```
+    $ make logs
+    ```
+- コンテナを停止:
+    ```
+    $ make down
+    ```
+
+## 開発
+### テストの実行
+- テストを実行:
+    ```
+    $ make test
+    ```
+- カバレッジ付きでテストを実行:
+    ```
+    $ make test-coverage
+    ```
+
+### コード品質チェック
+- リンターチェック:
+    ```
+    $ make lint
+    ```
+- コードフォーマットを適用:
+    ```
+    $ make format
+    ```
+
+## データベース
+### データベースの切り替え
+1. `.env` ファイルを編集:
+
+MySQLの場合:
+```
+DB_TYPE=mysql
+DB_HOST=mysql-db
+DB_PORT=3306
+DB_NAME=todo
+DB_USER=<your_username>
+DB_PASSWORD=<your_password>
+```
+
+PostgreSQLの場合:
+```
+DB_TYPE=postgresql
+DB_HOST=postgresql-db
+DB_PORT=5432
+DB_NAME=todo
+DB_USER=<your_username>
+DB_PASSWORD=<your_password>
+```
+
+2. アプリケーションを再ビルドして再起動:
+```
+$ make build-local
+$ make up
+$ make migrate-mysql
+$ make migrate-psql
+```
+
+### データベースへのアクセス
+- MySQLデータベースにアクセス:
+    ```
+    $ make mysql
+    ```
+- PostgreSQLデータベースにアクセス:
+    ```
+    $ make psql
+    ```
