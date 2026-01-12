@@ -71,7 +71,7 @@ func New() (*Config, error) {
 		return nil, fmt.Errorf("DB_PASSWORD is required")
 	}
 
-	// CORSの設定を取得
+	// Get CORS configuration
 	corsOriginsStr := os.Getenv("CORS_ORIGINS")
 	if corsOriginsStr == "" {
 		return nil, fmt.Errorf("CORS_ORIGINS is required")

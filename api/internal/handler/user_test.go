@@ -13,7 +13,7 @@ import (
 	"github.com/kenwoo9y/todo-api-go/api/pkg/common"
 )
 
-// MockUserRepository は repository.UserRepository のモック実装
+// MockUserRepository is a mock implementation of repository.UserRepository
 type MockUserRepository struct {
 	createFunc        func(ctx context.Context, user *entity.User) error
 	getAllFunc        func(ctx context.Context) ([]entity.User, error)
@@ -56,7 +56,7 @@ func TestUserHandler_Create(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name: "正常系：ユーザー作成成功",
+			name: "Success: User creation succeeds",
 			requestBody: CreateUserRequest{
 				Username:  "testuser",
 				Email:     "test@example.com",
@@ -72,7 +72,7 @@ func TestUserHandler_Create(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name: "異常系：リポジトリエラー",
+			name: "Error: Repository error",
 			requestBody: CreateUserRequest{
 				Username:  "testuser",
 				Email:     "test@example.com",
@@ -130,7 +130,7 @@ func TestUserHandler_GetByID(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name:   "正常系：ユーザー取得成功",
+			name:   "Success: User retrieval succeeds",
 			userID: 1,
 			mockSetup: func(m *MockUserRepository) {
 				m.getByIDFunc = func(ctx context.Context, id int64) (*entity.User, error) {
@@ -147,7 +147,7 @@ func TestUserHandler_GetByID(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name:   "異常系：ユーザーが見つからない",
+			name:   "Error: User not found",
 			userID: 999,
 			mockSetup: func(m *MockUserRepository) {
 				m.getByIDFunc = func(ctx context.Context, id int64) (*entity.User, error) {
@@ -197,7 +197,7 @@ func TestUserHandler_Update(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name:   "正常系：ユーザー更新成功",
+			name:   "Success: User update succeeds",
 			userID: 1,
 			requestBody: UpdateUserRequest{
 				Username: stringPtr("updateduser"),
@@ -221,7 +221,7 @@ func TestUserHandler_Update(t *testing.T) {
 			expectedError:  false,
 		},
 		{
-			name:   "異常系：更新フィールドが空",
+			name:   "Error: Update fields are empty",
 			userID: 1,
 			requestBody: UpdateUserRequest{
 				Username: nil,
@@ -275,7 +275,7 @@ func TestUserHandler_Update(t *testing.T) {
 	}
 }
 
-// ヘルパー関数
+// Helper function
 func stringPtr(s string) *string {
 	return &s
 }

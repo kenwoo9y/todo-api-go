@@ -41,7 +41,7 @@ func SetupServer(cfg *config.Config, userHandler *handler.UserHandler, taskHandl
 		taskHandler: taskHandler,
 	}
 
-	// CORSミドルウェアを適用
+	// Apply CORS middleware
 	corsConfig := middleware.NewCORSConfig(cfg)
 	handler := corsConfig.CORS(router)
 
